@@ -9,7 +9,7 @@ use lib qw(.);
 use Archive::Tar;
 use Compress::Zlib;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # constructor
 sub new {
@@ -324,9 +324,9 @@ sub add_file {
     $new_filename =~ s|^/?|./|;
     
     return undef unless open(ADDFILE, "<$filename");
-    local $/;
-    $/ = undef;
-    $self->{TAR_DATA}->add_data($new_filename, <ADDFILE>);
+    binmode ADDFILE;
+    local $/; undef $/;
+    $self->{TAR_DATA}->add_data($new_filename, <ADDFILE>, { mode => 0100644 });
     close(ADDFILE);
 
     return 1;
@@ -337,6 +337,9 @@ sub add_file_by_data {
     my ($filename, $data, $opts) = @_;
 
     $filename =~ s|^/?|./|;
+
+    $opts = { mode => 0100644 }
+      unless (defined $opts && ref $opts && exists $opts->{mode});
 
     return $self->{TAR_DATA}->add_data($filename, $data, $opts);
 }
@@ -376,30 +379,35 @@ sub data {
     # make control package
     $self->{TAR_CONTROL} = Archive::Tar->new();
 
-    $self->{TAR_CONTROL}->add_data("./control", $self->control);
+    $self->{TAR_CONTROL}->add_data("./control", $self->control, { mode => 0100644 });
     foreach (qw(preinst postinst prerm postrm)) {
         $self->{TAR_CONTROL}->add_data("./$_", $self->{$_},
-            {mode => 0755}) if (defined $self->{$_});
+            {mode => 0100755}) if (defined $self->{$_});
     }
 
     $self->{TAR_CONTROL}->add_data("./conffiles",
-        join"\n", $self->{config_files})
+        join"\n", $self->{config_files}, { mode => 0100644 })
         if (defined $self->{config_files} && ref $self->{config_files});
 
     # make package
     $self->{TAR_IPKG} = Archive::Tar->new();
+    $self->{TAR_IPKG}->add_data("./debian-binary", "2.0\n", { mode => 0100644 });
 
-    my $data = Compress::Zlib::memGzip($self->{TAR_DATA}->write());
-    return undef unless defined $data;
-    $self->{TAR_IPKG}->add_data("./data.tar.gz", $data);
+    my ($tar_data);
 
-    my $control = Compress::Zlib::memGzip($self->{TAR_CONTROL}->write());
-    return undef unless defined $control;
-    $self->{TAR_IPKG}->add_data("./control.tar.gz", $control);
+    $tar_data = Compress::Zlib::memGzip($self->{TAR_DATA}->write());
+    return undef unless defined $tar_data;
+    $self->{TAR_IPKG}->add_data("./data.tar.gz",
+        $tar_data, { mode => 0100644 });
 
-    $self->{TAR_IPKG}->add_data("./debian-binary", "2.0\n");
+    $tar_data = Compress::Zlib::memGzip($self->{TAR_CONTROL}->write());
 
-    return $self->{TAR_IPKG}->write();
+    return undef unless defined $tar_data;
+    $self->{TAR_IPKG}->add_data("./control.tar.gz",
+        $tar_data, { mode => 0100644 });
+
+    $tar_data = Compress::Zlib::memGzip($self->{TAR_IPKG}->write());
+    return $tar_data;
 }
 
 sub write {
@@ -411,7 +419,8 @@ sub write {
     return undef unless ($filename && defined $data);
 
     open IPKG, ">$filename" or carp "Can't write iPKG '$filename': $!";
-    print IPKG Compress::Zlib::memGzip($data);
+    binmode IPKG;
+    print IPKG $data;
     close IPKG;
 }
 
@@ -444,12 +453,10 @@ Archive::Ipkg - Module for manipulation of iPKG archives
 
 =head1 DESCRIPTION
 
-B<This module is in a rough alpha state. Due to an unknown reason,
-busybox-0.61pre's tar can't deal with the generated .tgz file :(.>
-
-This module aids in the construction of iPKG packages (See links below for
-description of the implemented package format). The interface is somewhat
-similar to that of L<Archive::Tar>, but with a couple differences.
+This module aids in the construction of iPKG packages (See links below
+for description of the implemented package format). The interface is
+somewhat similar to that of L<Archive::Tar>, but with a couple
+differences. I consider the module to be in a beta stage.
 
 The typical workflow is as follows: Create a new object, add files to it, set
 the properties of the iPKG package and write it to a file (or get the data as
