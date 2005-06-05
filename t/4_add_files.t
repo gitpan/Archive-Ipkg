@@ -8,7 +8,8 @@ use Archive::Ipkg;
 my $ipkg = Archive::Ipkg->new();
 
 # return undef if file doesn't exist
-ok(!defined $ipkg->add_files("weird_filename"));
+my $a = $ipkg->add_files("weird_filename");
+ok(!defined $a || $a == 0);
 ok($ipkg->add_files("Makefile"));
 
 ok($ipkg->add_file_by_data("filename", "some file contents"));

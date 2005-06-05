@@ -9,7 +9,7 @@ use lib qw(.);
 use Archive::Tar;
 use Compress::Zlib;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 # constructor
 sub new {
@@ -469,8 +469,14 @@ and how to circumvent some of the checks.
 
 =head2 CONSTRUCTOR
 
+=over 4
+
+=item C<$ipkg = Archive::Ipkg-E<gt>new(...)>
+
 The C<new> constructor creates a new object. You can pass any property to the
 constructor, if you want, or set the properties later.
+
+=back
 
 =head2 ADDING FILES
 
@@ -500,13 +506,18 @@ file's content and uses L<Archive::Tar>'s C<add_data> to add the file.
 
 =over 4
 
-=item C<$errmsg = $ipkg-E<gt>verify>
+=item C<$ctl = $ipkg-E<gt>control()>
+
+Returns the text of the control file that will be written. You just need this
+if you want to check the file.
+
+=item C<$errmsg = $ipkg-E<gt>verify()>
 
 Verifies whether the archive can be written by checking whether at least the
 required properties are set (see below).
 Returns an error message if unsuccessful, else undef (!).
 
-=item C<$ipkg-E<gt>write>
+=item C<$ipkg-E<gt>write()>
 
 Writes the archive to disk, in the current directory. If no filename is given,
 it uses the internally generated default filename (see filename property).
@@ -514,7 +525,7 @@ You can either set a filename of your own before writing or combine the default
 filename and a directory name to save the package in the directory of your
 choice. Returns undef on failure.
 
-=item C<$ipkg-E<gt>data>
+=item C<$ipkg-E<gt>data()>
 
 Returns the archive data as a scalar. Unlike L<Archive::Tar>'s C<data>, this
 does not return the internal data structures, but rather the archive's contents
@@ -634,11 +645,27 @@ B<Default:> No script
 
 B<Default:> No script
 
-=item C<$ipkg-E<gt>postinst_script($script_text)>
+=item C<$ipkg-E<gt>postrm_script($script_text)>
 
 (Shell) script to be executed after removal.
 
 B<Default:> No script
+
+=back
+
+=head2 DEFAULTS METHODS
+
+The following methods return the default values for the properties above.
+
+=over 4
+
+=item C<my $val = $ipkg-E<gt>default_architecture>
+
+=item C<my $val = $ipkg-E<gt>default_priority>
+
+=item C<my $val = $ipkg-E<gt>default_section>
+
+=item C<my $val = $ipkg-E<gt>default_version>
 
 =back
 
@@ -660,8 +687,8 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-http://www.handhelds.org/z/wiki/iPKG
+http://handhelds.org/moin/moin.cgi/Ipkg?action=highlight&value=iPKG
 
-http://docs.zaurus.com/ipkg_howto.shtml
+http://handhelds.org/moin/moin.cgi/BuildingIpkgs?action=highlight&value=iPKG
 
 =cut

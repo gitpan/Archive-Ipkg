@@ -1,5 +1,5 @@
-Archive/Ipkg version 0.01
-=========================
+Archive/Ipkg
+============
 
 This module aids in the construction of iPKG packages (See links below
 for description of the implemented package format). The interface is

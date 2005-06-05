@@ -7,3 +7,6 @@ t/1_use.t
 t/2_properties.t
 t/3_strict_properties.t
 t/4_add_files.t
+t/pod.t
+t/pod-coverage.t
+META.yml                                Module meta-data (added by MakeMaker)
