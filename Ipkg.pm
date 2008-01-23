@@ -9,7 +9,7 @@ use lib qw(.);
 use Archive::Tar;
 use Compress::Zlib;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 # constructor
 sub new {
